@@ -57,7 +57,7 @@ export function useCanvas(id: string) {
     while (startX <= width!) {
       startX += 10
       const verticalLine = new fabric.Line([startX, 0, startX, height!], {
-        name: uuidv4(),
+        name: 'defaultLine',
         stroke: 'black',
         strokeWidth: 1,
         selectable: false,
@@ -70,7 +70,7 @@ export function useCanvas(id: string) {
     while (startY <= height!) {
       startY += 10
       const verticalLine = new fabric.Line([0, startY, width!, startY], {
-        name: uuidv4(),
+        name: 'defaultLine',
         stroke: 'black',
         strokeWidth: 1,
         selectable: false,
@@ -177,6 +177,15 @@ export function useCanvas(id: string) {
       return
     }
     canvas?.remove(targetObj)
+    //삭제 후 마지막 object
+    const remainFigures = canvas?.getObjects()
+    if (remainFigures?.length !== 0) {
+      const lastFigure = remainFigures![remainFigures!.length - 1]
+      // 마지막 도형이 라인일 경우는 선택하지 않는다.
+      if (lastFigure.name !== 'defaultLine') {
+        canvas?.setActiveObject(lastFigure)
+      }
+    }
   }
 
   /**
