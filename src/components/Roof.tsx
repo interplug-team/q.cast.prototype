@@ -12,6 +12,8 @@ export default function Roof() {
     handleClear,
     handleCopy,
     handleDelete,
+    handleSave,
+    handlePaste,
   ] = useCanvas('canvas')
 
   const addRect = () => {
@@ -65,31 +67,6 @@ export default function Roof() {
     })
 
     createFigure(triangle)
-  }
-
-  const handleSave = () => {
-    const objects = canvas?.getObjects()
-
-    if (objects?.length === 0) {
-      alert('저장할 대상이 없습니다.')
-      return
-    }
-    const jsonStr = JSON.stringify(canvas)
-    localStorage.setItem('canvas', jsonStr)
-    handleClear()
-  }
-
-  const handlePaste = () => {
-    const jsonStr = localStorage.getItem('canvas')
-    if (!jsonStr) {
-      alert('붙여넣기 할 대상이 없습니다.')
-      return
-    }
-
-    canvas?.loadFromJSON(JSON.parse(jsonStr), () => {
-      localStorage.removeItem('canvas')
-      console.log('paste done')
-    })
   }
 
   const randomColor = () => {

@@ -179,6 +179,40 @@ export function useCanvas(id: string) {
     canvas?.remove(targetObj)
   }
 
+  /**
+   * 페이지 내 캔버스 저장
+   * todo : 현재는 localStorage에 그냥 저장하지만 나중에 변경해야함
+   */
+  const handleSave = () => {
+    const objects = canvas?.getObjects()
+
+    if (objects?.length === 0) {
+      alert('저장할 대상이 없습니다.')
+      return
+    }
+    const jsonStr = JSON.stringify(canvas)
+    localStorage.setItem('canvas', jsonStr)
+    handleClear()
+  }
+
+  /**
+   * 페이지 내 캔버스에 저장한 내용 불러오기
+   * todo : 현재는 localStorage에 그냥 저장하지만 나중에 변경해야함
+   */
+
+  const handlePaste = () => {
+    const jsonStr = localStorage.getItem('canvas')
+    if (!jsonStr) {
+      alert('붙여넣기 할 대상이 없습니다.')
+      return
+    }
+
+    canvas?.loadFromJSON(JSON.parse(jsonStr), () => {
+      localStorage.removeItem('canvas')
+      console.log('paste done')
+    })
+  }
+
   return [
     canvas,
     createFigure,
@@ -187,5 +221,7 @@ export function useCanvas(id: string) {
     handleClear,
     handleCopy,
     handleDelete,
+    handleSave,
+    handlePaste,
   ] as const
 }
