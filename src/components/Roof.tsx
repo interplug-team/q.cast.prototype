@@ -147,8 +147,8 @@ export default function Roof() {
         className="flex justify-center"
         style={{
           border: '1px solid',
-          width: 800,
-          height: 800,
+          width: 1000,
+          height: 1000,
           margin: 'auto',
         }}
       >

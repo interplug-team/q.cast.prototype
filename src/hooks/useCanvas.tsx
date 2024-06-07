@@ -12,8 +12,8 @@ export function useCanvas(id: string) {
    */
   useEffect(() => {
     const c = new fabric.Canvas(id, {
-      height: 800,
-      width: 800,
+      height: 1000,
+      width: 1000,
     })
 
     // settings for all canvas in the app
