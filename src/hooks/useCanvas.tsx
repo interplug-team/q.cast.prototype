@@ -2,17 +2,7 @@ import { useEffect, useState } from 'react'
 import { fabric } from 'fabric'
 import { v4 as uuidv4 } from 'uuid'
 
-export function useCanvas(
-  id: string,
-): [
-  fabric.Canvas | undefined,
-  (figure: fabric.Object) => void,
-  () => void,
-  () => void,
-  () => void,
-  () => void,
-  () => void,
-] {
+export function useCanvas(id: string) {
   const [canvas, setCanvas] = useState<fabric.Canvas | undefined>()
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [history, setHistory] = useState<fabric.Object[] | undefined>([])
@@ -197,5 +187,5 @@ export function useCanvas(
     handleClear,
     handleCopy,
     handleDelete,
-  ]
+  ] as const
 }

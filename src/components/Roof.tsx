@@ -12,14 +12,6 @@ export default function Roof() {
     handleClear,
     handleCopy,
     handleDelete,
-  ]: [
-    fabric.Canvas | undefined,
-    (figure: fabric.Object) => void,
-    () => void,
-    () => void,
-    () => void,
-    () => void,
-    () => void,
   ] = useCanvas('canvas')
 
   const addRect = () => {
