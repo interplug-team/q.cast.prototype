@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 export default function Roof() {
   const [canvas, setCanvas] = useState<fabric.Canvas>()
-  const [isLocked, setIsLocked] = useState(false)
+  const [isLocked, setIsLocked] = useState<boolean>(false)
   const [history, setHistory] = useState<fabric.Object[] | undefined>([])
 
   useEffect(() => {
@@ -21,33 +21,78 @@ export default function Roof() {
     fabric.Object.prototype.cornerSize = 6
 
     setCanvas(c)
-
     return () => {
       c.dispose()
     }
   }, [])
 
-  const addRect = (canvas?: fabric.Canvas) => {
+  useEffect(() => {
+    if (canvas) {
+      initialize()
+    }
+  }, [canvas])
+
+  const initialize = () => {
+    canvas?.clear()
+    /**
+     * 눈금 그리기
+     */
+    const width = canvas?.getWidth()
+    const height = canvas?.getHeight()
+
+    let startX = 0
+
+    let startY = 0
+
+    while (startX <= width!) {
+      startX += 10
+      const verticalLine = new fabric.Line([startX, 0, startX, height!], {
+        name: uuidv4(),
+        stroke: 'black',
+        strokeWidth: 1,
+        selectable: false,
+        opacity: 0.5,
+      })
+
+      createFigure(verticalLine)
+    }
+
+    while (startY <= height!) {
+      startY += 10
+      const verticalLine = new fabric.Line([0, startY, width!, startY], {
+        name: uuidv4(),
+        stroke: 'black',
+        strokeWidth: 1,
+        selectable: false,
+        opacity: 0.5,
+      })
+
+      createFigure(verticalLine)
+    }
+  }
+
+  const addRect = () => {
     const rect = new fabric.Rect({
       height: 200,
       width: 200,
       top: 10,
       left: 10,
-      stroke: randomColor(),
-      fill: 'white',
+      opacity: 0.4,
+      fill: randomColor(),
+      stroke: 'red',
       name: uuidv4(),
     })
 
     createFigure(rect)
   }
 
-  const addHorizontalLine = (canvas?: fabric.Canvas) => {
+  const addHorizontalLine = () => {
     /**
      * 시작X,시작Y,도착X,도착Y 좌표
      */
     const horizontalLine = new fabric.Line([20, 20, 100, 20], {
       name: uuidv4(),
-      stroke: randomColor(),
+      stroke: 'red',
       strokeWidth: 3,
       selectable: true,
     })
@@ -55,10 +100,10 @@ export default function Roof() {
     createFigure(horizontalLine)
   }
 
-  const addVerticalLine = (canvas?: fabric.Canvas) => {
+  const addVerticalLine = () => {
     const verticalLine = new fabric.Line([10, 10, 10, 100], {
       name: uuidv4(),
-      stroke: randomColor(),
+      stroke: 'red',
       strokeWidth: 3,
       selectable: true,
     })
@@ -66,7 +111,7 @@ export default function Roof() {
     createFigure(verticalLine)
   }
 
-  const addTriangle = (canvas?: fabric.Canvas) => {
+  const addTriangle = () => {
     const triangle = new fabric.Triangle({
       name: uuidv4(),
       top: 50,
@@ -79,16 +124,18 @@ export default function Roof() {
     createFigure(triangle)
   }
 
-  const createFigure = (figure: any) => {
+  const createFigure = (figure: fabric.Object) => {
     canvas?.add(figure)
+    canvas?.setActiveObject(figure)
     canvas?.requestRenderAll()
   }
 
-  const handleClear = (canvas?: fabric.Canvas) => {
+  const handleClear = () => {
     canvas?.clear()
+    initialize()
   }
 
-  const handleCopyFigure = (canvas?: fabric.Canvas) => {
+  const handleCopyFigure = () => {
     const targetObj = canvas?.getActiveObject()
     if (!targetObj) {
       alert('복사할 대상을 선택해주세요.')
@@ -99,10 +146,11 @@ export default function Roof() {
       cloned.left! += 10
       cloned.top! += 10
       canvas?.add(cloned)
+      canvas?.setActiveObject(cloned)
     })
   }
 
-  const handleDelete = (canvas?: fabric.Canvas) => {
+  const handleDelete = () => {
     const targetObj = canvas?.getActiveObject()
     if (!targetObj) {
       alert('삭제할 대상을 선택해주세요.')
@@ -111,7 +159,7 @@ export default function Roof() {
     canvas?.remove(targetObj)
   }
 
-  const handleSave = (canvas?: fabric.Canvas) => {
+  const handleSave = () => {
     const objects = canvas?.getObjects()
 
     if (objects?.length === 0) {
@@ -120,10 +168,10 @@ export default function Roof() {
     }
     const jsonStr = JSON.stringify(canvas)
     localStorage.setItem('canvas', jsonStr)
-    canvas?.clear()
+    initialize()
   }
 
-  const handlePaste = (canvas?: fabric.Canvas) => {
+  const handlePaste = () => {
     const jsonStr = localStorage.getItem('canvas')
     if (!jsonStr) {
       alert('붙여넣기 할 대상이 없습니다.')
@@ -166,11 +214,26 @@ export default function Roof() {
     }
   }
 
-  const onChange = () => {
+  const onChange = (e: fabric.IEvent) => {
+    const target = e.target
+    if (target) {
+      settleDown(target)
+    }
+
     if (!isLocked) {
       setHistory([])
     }
     setIsLocked(false)
+  }
+
+  const settleDown = (figure: fabric.Object) => {
+    /**
+     * 10단위로 움직이도록
+     */
+    const left = Math.round(figure?.left! / 10) * 10
+    const top = Math.round(figure?.top! / 10) * 10
+
+    figure?.set({ left: left, top: top })
   }
 
   useEffect(() => {
@@ -188,94 +251,79 @@ export default function Roof() {
       <div className="flex justify-center my-8">
         <button
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
-          onClick={() => addRect(canvas)}
+          onClick={addRect}
         >
           ADD RECTANGLE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
-          onClick={() => {
-            addHorizontalLine(canvas)
-          }}
+          onClick={addHorizontalLine}
         >
           ADD HORIZONTAL LINE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
-          onClick={() => {
-            addVerticalLine(canvas)
-          }}
+          onClick={addVerticalLine}
         >
           ADD VERTICALITY LINE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
-          onClick={() => {
-            addTriangle(canvas)
-          }}
+          onClick={addTriangle}
         >
           ADD TRIANGLE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
-          onClick={() => {
-            handleCopyFigure(canvas)
-          }}
+          onClick={handleCopyFigure}
         >
           COPY FIGURE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-red-500 text-white"
-          onClick={() => {
-            handleDelete(canvas)
-          }}
+          onClick={handleDelete}
         >
           DELETE
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-red-500 text-white"
-          onClick={() => {
-            handleClear(canvas)
-          }}
+          onClick={handleClear}
         >
           CLEAR
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-green-500 text-white"
-          onClick={() => {
-            handleUndo()
-          }}
+          onClick={handleUndo}
         >
           UNDO
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-green-300 text-white"
-          onClick={() => {
-            handleRedo()
-          }}
+          onClick={handleRedo}
         >
           REDO
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
-          onClick={() => {
-            handleSave(canvas)
-          }}
+          onClick={handleSave}
         >
           저장
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
-          onClick={() => {
-            handlePaste(canvas)
-          }}
+          onClick={handlePaste}
         >
           붙여넣기
         </button>
       </div>
       <div
         className="flex justify-center"
-        style={{ border: '1px solid', width: 800, height: 800, margin: 'auto' }}
+        style={{
+          border: '1px solid',
+          width: 800,
+          height: 800,
+          margin: 'auto',
+        }}
       >
         <canvas id="canvas" />
       </div>
