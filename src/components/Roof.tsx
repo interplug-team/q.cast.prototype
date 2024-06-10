@@ -78,9 +78,11 @@ export default function Roof() {
         { x: 150, y: 200 }, // 좌하단
       ],
       {
-        fill: 'blue', // 색상
-        stroke: 'black', // 테두리 색상
-        strokeWidth: 2, // 테두리 두께
+        name: uuidv4(),
+        stroke: 'red',
+        opacity: 0.4,
+        strokeWidth: 3,
+        selectable: true,
       },
     )
 
