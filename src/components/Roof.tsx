@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 export default function Roof() {
-  const [
+  const {
     canvas,
     createFigure,
     handleUndo,
@@ -14,7 +14,7 @@ export default function Roof() {
     handleDelete,
     handleSave,
     handlePaste,
-  ] = useCanvas('canvas')
+  } = useCanvas('canvas')
 
   const addRect = () => {
     const rect = new fabric.Rect({
@@ -69,6 +69,24 @@ export default function Roof() {
     createFigure(triangle)
   }
 
+  const addTrapezoid = () => {
+    const trapezoid = new fabric.Polygon(
+      [
+        { x: 100, y: 100 }, // 좌상단
+        { x: 300, y: 100 }, // 우상단
+        { x: 250, y: 200 }, // 우하단
+        { x: 150, y: 200 }, // 좌하단
+      ],
+      {
+        fill: 'blue', // 색상
+        stroke: 'black', // 테두리 색상
+        strokeWidth: 2, // 테두리 두께
+      },
+    )
+
+    createFigure(trapezoid)
+  }
+
   const randomColor = () => {
     return '#' + Math.round(Math.random() * 0xffffff).toString(16)
   }
@@ -99,6 +117,12 @@ export default function Roof() {
           onClick={addTriangle}
         >
           ADD TRIANGLE
+        </button>
+        <button
+          className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
+          onClick={addTrapezoid}
+        >
+          사다리꼴
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
