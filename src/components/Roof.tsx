@@ -14,6 +14,7 @@ export default function Roof() {
     handleDelete,
     handleSave,
     handlePaste,
+    handleRotate,
   } = useCanvas('canvas')
 
   const addRect = () => {
@@ -167,6 +168,12 @@ export default function Roof() {
           onClick={handlePaste}
         >
           붙여넣기
+        </button>
+        <button
+          className="w-30 mx-2 p-2 rounded bg-black text-white"
+          onClick={handleRotate}
+        >
+          45도 회전
         </button>
       </div>
       <div

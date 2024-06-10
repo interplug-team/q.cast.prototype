@@ -336,6 +336,19 @@ export function useCanvas(id: string) {
     e.preventDefault()
   }
 
+  const handleRotate = () => {
+    const target = canvas?.getActiveObject()
+
+    if (!target) {
+      return
+    }
+
+    const currentAngle = target.angle
+
+    target.set({ angle: currentAngle! + 45 })
+    canvas?.renderAll()
+  }
+
   return {
     canvas,
     createFigure,
@@ -346,5 +359,6 @@ export function useCanvas(id: string) {
     handleDelete,
     handleSave,
     handlePaste,
+    handleRotate,
   } as const
 }
