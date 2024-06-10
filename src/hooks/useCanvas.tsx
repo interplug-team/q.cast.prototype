@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react'
 import { fabric } from 'fabric'
 import { v4 as uuidv4 } from 'uuid'
 
+const CANVAS = {
+  WIDTH: 1000,
+  HEIGHT: 1000,
+}
+
 export function useCanvas(id: string) {
   const [canvas, setCanvas] = useState<fabric.Canvas | undefined>()
   const [isLocked, setIsLocked] = useState<boolean>(false)
@@ -12,8 +17,8 @@ export function useCanvas(id: string) {
    */
   useEffect(() => {
     const c = new fabric.Canvas(id, {
-      height: 1000,
-      width: 1000,
+      height: CANVAS.HEIGHT,
+      width: CANVAS.WIDTH,
     })
 
     // settings for all canvas in the app
@@ -36,6 +41,9 @@ export function useCanvas(id: string) {
     if (canvas) {
       initialize()
       canvas.on('object:added', onChange)
+      canvas.on('object:added', () => {
+        document.addEventListener('keydown', handleKeyDown)
+      })
       canvas.on('object:modified', onChange)
       canvas.on('object:removed', onChange)
     }
@@ -115,7 +123,7 @@ export function useCanvas(id: string) {
   /**
    * redo, undo가 필요한 곳에서 사용한다.
    */
-  const handleRedo = (): void => {
+  const handleUndo = (): void => {
     if (canvas) {
       if (canvas._objects.length > 0) {
         const poppedObject = canvas._objects.pop()
@@ -130,7 +138,7 @@ export function useCanvas(id: string) {
     }
   }
 
-  const handleUndo = (): void => {
+  const handleRedo = (): void => {
     if (canvas && history) {
       if (history.length > 0) {
         setIsLocked(true)
@@ -171,21 +179,19 @@ export function useCanvas(id: string) {
    * 선택한 도형을 삭제한다.
    */
   const handleDelete = (): void => {
-    const targetObj = canvas?.getActiveObject()
-    if (!targetObj) {
+    const targets = canvas?.getActiveObjects()
+    if (targets?.length === 0) {
       alert('삭제할 대상을 선택해주세요.')
       return
     }
-    canvas?.remove(targetObj)
-    //삭제 후 마지막 object
-    const remainFigures = canvas?.getObjects()
-    if (remainFigures?.length !== 0) {
-      const lastFigure = remainFigures![remainFigures!.length - 1]
-      // 마지막 도형이 라인일 경우는 선택하지 않는다.
-      if (lastFigure.name !== 'defaultLine') {
-        canvas?.setActiveObject(lastFigure)
-      }
+
+    if (!confirm('정말로 삭제하시겠습니까?')) {
+      return
     }
+
+    targets?.forEach((target) => {
+      canvas?.remove(target)
+    })
   }
 
   /**
@@ -222,15 +228,123 @@ export function useCanvas(id: string) {
     })
   }
 
-  return [
+  const moveDown = () => {
+    const targetObj = canvas?.getActiveObject()
+    if (!targetObj) {
+      return
+    }
+
+    let top = targetObj.top! + 10
+
+    if (top > CANVAS.HEIGHT) {
+      top = CANVAS.HEIGHT
+    }
+
+    targetObj.set({ top: top })
+    canvas?.renderAll()
+  }
+
+  const moveUp = () => {
+    const targetObj = canvas?.getActiveObject()
+    if (!targetObj) {
+      return
+    }
+
+    let top = targetObj.top! - 10
+
+    if (top < 0) {
+      top = 0
+    }
+
+    targetObj.set({ top: top })
+    canvas?.renderAll()
+  }
+
+  const moveLeft = () => {
+    const targetObj = canvas?.getActiveObject()
+    if (!targetObj) {
+      return
+    }
+
+    let left = targetObj.left! - 10
+
+    if (left < 0) {
+      left = 0
+    }
+
+    targetObj.set({ left: left })
+    canvas?.renderAll()
+  }
+
+  const moveRight = () => {
+    const targetObj = canvas?.getActiveObject()
+    if (!targetObj) {
+      return
+    }
+
+    let left = targetObj.left! + 10
+
+    if (left > CANVAS.WIDTH) {
+      left = CANVAS.WIDTH
+    }
+
+    targetObj.set({ left: left })
+    canvas?.renderAll()
+  }
+
+  /**
+   * 각종 키보드 이벤트
+   * https://developer.mozilla.org/en-US/docs/Web/API/UI_Events/Keyboard_event_key_values
+   */
+  const handleKeyDown = (e: KeyboardEvent) => {
+    const key = e.key
+
+    switch (key) {
+      case 'Delete':
+      case 'Backspace':
+        handleDelete()
+        break
+      case 'Down': // IE/Edge에서 사용되는 값
+      case 'ArrowDown':
+        // "아래 화살표" 키가 눌렸을 때의 동작입니다.
+        moveDown()
+        break
+      case 'Up': // IE/Edge에서 사용되는 값
+      case 'ArrowUp':
+        // "위 화살표" 키가 눌렸을 때의 동작입니다.
+        moveUp()
+        break
+      case 'Left': // IE/Edge에서 사용되는 값
+      case 'ArrowLeft':
+        // "왼쪽 화살표" 키가 눌렸을 때의 동작입니다.
+        moveLeft()
+        break
+      case 'Right': // IE/Edge에서 사용되는 값
+      case 'ArrowRight':
+        // "오른쪽 화살표" 키가 눌렸을 때의 동작입니다.
+        moveRight()
+        break
+      case 'Enter':
+        // "enter" 또는 "return" 키가 눌렸을 때의 동작입니다.
+        break
+      case 'Esc': // IE/Edge에서 사용되는 값
+      case 'Escape':
+        break
+      default:
+        return // 키 이벤트를 처리하지 않는다면 종료합니다.
+    }
+    e.preventDefault()
+  }
+
+  return {
     canvas,
     createFigure,
-    handleRedo,
     handleUndo,
+    handleRedo,
     handleClear,
     handleCopy,
     handleDelete,
     handleSave,
     handlePaste,
-  ] as const
+  } as const
 }
