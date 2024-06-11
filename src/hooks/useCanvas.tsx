@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { fabric } from 'fabric'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -11,6 +11,9 @@ export function useCanvas(id: string) {
   const [canvas, setCanvas] = useState<fabric.Canvas | undefined>()
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [history, setHistory] = useState<fabric.Object[] | undefined>([])
+
+  const connectMode = useRef<boolean>(false)
+  const points = useRef<fabric.Object[]>([])
 
   /**
    * 처음 셋팅
@@ -46,6 +49,7 @@ export function useCanvas(id: string) {
       })
       canvas.on('object:modified', onChange)
       canvas.on('object:removed', onChange)
+      canvas.on('mouse:down', onClick)
     }
   }, [canvas])
 
@@ -161,17 +165,17 @@ export function useCanvas(id: string) {
    * 선택한 도형을 복사한다.
    */
   const handleCopy = (): void => {
-    const targetObj = canvas?.getActiveObject()
-    if (!targetObj) {
-      alert('복사할 대상을 선택해주세요.')
+    const activeObjects = canvas?.getActiveObjects()
+
+    if (activeObjects?.length === 0) {
       return
     }
 
-    targetObj.clone((cloned: fabric.Object) => {
-      cloned.left! += 10
-      cloned.top! += 10
-      canvas?.add(cloned)
-      canvas?.setActiveObject(cloned)
+    activeObjects?.forEach((obj: fabric.Object) => {
+      obj.clone((cloned: fabric.Object) => {
+        cloned.set({ left: obj.left! + 10, top: obj.top! + 10 })
+        createFigure(cloned)
+      })
     })
   }
 
@@ -336,7 +340,7 @@ export function useCanvas(id: string) {
     e.preventDefault()
   }
 
-  const handleRotate = () => {
+  const handleRotate = (degree: number = 45) => {
     const target = canvas?.getActiveObject()
 
     if (!target) {
@@ -345,8 +349,53 @@ export function useCanvas(id: string) {
 
     const currentAngle = target.angle
 
-    target.set({ angle: currentAngle! + 45 })
+    target.set({ angle: currentAngle! + degree })
     canvas?.renderAll()
+  }
+
+  const onClick = (event: any) => {
+    const e = event.e
+    if (!e.ctrlKey) {
+      return
+    }
+    // 클릭한 위치의 좌표를 가져옴
+    const pointer = canvas?.getPointer(e)
+    const x = pointer?.x
+    const y = pointer?.y
+
+    // 클릭한 위치에 점(원) 추가
+    const point = new fabric.Circle({
+      left: x,
+      top: y,
+      radius: 5,
+      fill: 'blue',
+      originX: 'center',
+      originY: 'center',
+    })
+
+    canvas?.add(point)
+
+    points.current.push(point)
+
+    if (points.current.length < 2) {
+      return
+    }
+    connectPoints(points.current[points.current.length - 2], point)
+  }
+
+  const connectPoints = (point1: fabric.Object, point2: fabric.Object) => {
+    const x1 = point1.left
+    const y1 = point1.top
+    const x2 = point2.left
+    const y2 = point2.top
+
+    // 점을 연결하는 선 생성
+    const connectingLine = new fabric.Line([x1!, y1!, x2!, y2!], {
+      stroke: 'red',
+      selectable: false,
+    })
+
+    canvas?.add(connectingLine)
   }
 
   return {
