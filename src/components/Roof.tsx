@@ -1,6 +1,5 @@
 import { useCanvas } from '@/hooks/useCanvas'
 import { fabric } from 'fabric'
-import { useEffect, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 export default function Roof() {
@@ -14,6 +13,7 @@ export default function Roof() {
     handleDelete,
     handleSave,
     handlePaste,
+    handleRotate,
   } = useCanvas('canvas')
 
   const addRect = () => {
@@ -70,23 +70,134 @@ export default function Roof() {
   }
 
   const addTrapezoid = () => {
-    const trapezoid = new fabric.Polygon(
-      [
-        { x: 100, y: 100 }, // 좌상단
-        { x: 300, y: 100 }, // 우상단
-        { x: 250, y: 200 }, // 우하단
-        { x: 150, y: 200 }, // 좌하단
-      ],
-      {
-        name: uuidv4(),
-        stroke: 'red',
-        opacity: 0.4,
-        strokeWidth: 3,
-        selectable: true,
-      },
-    )
+    // create a polygon object
+    let points = [
+      { x: 100, y: 4 },
+      { x: 200, y: 4 },
+      { x: 250, y: 100 },
+      { x: 100, y: 100 },
+    ]
 
-    createFigure(trapezoid)
+    let polygon = new fabric.Polygon(points, {
+      left: 100,
+      top: 50,
+      fill: 'transparent',
+      strokeWidth: 1,
+      stroke: 'green',
+      scaleX: 4,
+      scaleY: 4,
+      objectCaching: false,
+      transparentCorners: false,
+      cornerColor: 'blue',
+      edit: false,
+    })
+
+    canvas?.add(polygon)
+  }
+
+  function edit() {
+    const poly = canvas?.getActiveObject()
+    poly.edit = !poly.edit
+    if (poly.edit) {
+      var lastControl = poly.points.length - 1
+      poly.cornerStyle = 'rect'
+      poly.cornerColor = 'rgba(0,0,255,0.5)'
+      poly.controls = poly.points.reduce(function (acc, point, index) {
+        acc['p' + index] = new fabric.Control({
+          positionHandler: polygonPositionHandler,
+          actionHandler: anchorWrapper(
+            index > 0 ? index - 1 : lastControl,
+            actionHandler,
+          ),
+          actionName: 'modifyPolygon',
+          pointIndex: index,
+        })
+        return acc
+      }, {})
+    } else {
+      poly.cornerColor = 'blue'
+      poly.cornerStyle = 'rect'
+      poly.controls = fabric.Object.prototype.controls
+    }
+    poly.hasBorders = !poly.edit
+    canvas?.requestRenderAll()
+  }
+
+  // define a function that can locate the controls
+  function polygonPositionHandler(
+    dim: any,
+    finalMatrix: any,
+    fabricObject: any,
+  ) {
+    let x = fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x,
+      y = fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y
+    return fabric.util.transformPoint(
+      { x, y },
+      fabric.util.multiplyTransformMatrices(
+        fabricObject.canvas.viewportTransform,
+        fabricObject.calcTransformMatrix(),
+      ),
+    )
+  }
+
+  function getObjectSizeWithStroke(object: any) {
+    let stroke = new fabric.Point(
+      object.strokeUniform ? 1 / object.scaleX : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1,
+    ).multiply(object.strokeWidth)
+    return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
+  }
+
+  // define a function that will define what the control does
+  function actionHandler(eventData: any, transform: any, x: number, y: number) {
+    let polygon = transform.target,
+      currentControl = polygon.controls[polygon.__corner],
+      mouseLocalPosition = polygon.toLocalPoint(
+        new fabric.Point(x, y),
+        'center',
+        'center',
+      ),
+      polygonBaseSize = getObjectSizeWithStroke(polygon),
+      size = polygon._getTransformedDimensions(0, 0),
+      finalPointPosition = {
+        x:
+          (mouseLocalPosition.x * polygonBaseSize.x) / size.x +
+          polygon.pathOffset.x,
+        y:
+          (mouseLocalPosition.y * polygonBaseSize.y) / size.y +
+          polygon.pathOffset.y,
+      }
+    polygon.points[currentControl.pointIndex] = finalPointPosition
+    return true
+  }
+
+  // define a function that can keep the polygon in the same position when we change its width/height/top/left
+  function anchorWrapper(anchorIndex: number, fn: any) {
+    return function (eventData: any, transform: any, x: number, y: number) {
+      let fabricObject = transform.target
+      let originX =
+        fabricObject?.points[anchorIndex].x - fabricObject.pathOffset.x
+      let originY =
+        fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y
+      let absolutePoint = fabric.util.transformPoint(
+        {
+          x: originX,
+          y: originY,
+        },
+        fabricObject.calcTransformMatrix(),
+      )
+      let actionPerformed = fn(eventData, transform, x, y)
+      let newDim = fabricObject._setPositionDimensions({})
+      let polygonBaseSize = getObjectSizeWithStroke(fabricObject)
+      let newX =
+        (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) /
+        polygonBaseSize.x
+      let newY =
+        (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) /
+        polygonBaseSize.y
+      fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5)
+      return actionPerformed
+    }
   }
 
   const randomColor = () => {
@@ -167,6 +278,21 @@ export default function Roof() {
           onClick={handlePaste}
         >
           붙여넣기
+        </button>
+
+        <button
+          className="w-30 mx-2 p-2 rounded bg-black text-white"
+          onClick={() => handleRotate()}
+        >
+          45도 회전
+        </button>
+        <button
+          className="w-30 mx-2 p-2 rounded bg-black text-white"
+          onClick={() => {
+            edit()
+          }}
+        >
+          수정
         </button>
       </div>
       <div

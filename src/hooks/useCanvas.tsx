@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
 import { fabric } from 'fabric'
-import { v4 as uuidv4 } from 'uuid'
+import { useEffect, useState } from 'react'
 
 const CANVAS = {
   WIDTH: 1000,
@@ -102,6 +101,12 @@ export function useCanvas(id: string) {
     const target = e.target
     if (target) {
       settleDown(target)
+      if (target.points) {
+        target.newPoints = target.points.map((points) => ({
+          x: points.x + target.left,
+          y: points.y + target.top,
+        }))
+      }
     }
 
     if (!isLocked) {
@@ -336,6 +341,106 @@ export function useCanvas(id: string) {
     e.preventDefault()
   }
 
+  const handleRotate = (degree: number = 45) => {
+    const target = canvas?.getActiveObject()
+
+    if (!target) {
+      return
+    }
+
+    const currentAngle = target.angle
+
+    target.set({ angle: currentAngle! + degree })
+    canvas?.renderAll()
+  }
+
+  const onClick = (event: any) => {
+    const e = event.e
+    if (!e.ctrlKey) {
+      return
+    }
+    // 클릭한 위치의 좌표를 가져옴
+    const pointer = canvas?.getPointer(e)
+    const x = pointer?.x
+    const y = pointer?.y
+
+    // 클릭한 위치에 점(원) 추가
+    const point = new fabric.Circle({
+      left: x,
+      top: y,
+      radius: 5,
+      fill: 'blue',
+      originX: 'center',
+      originY: 'center',
+    })
+
+    canvas?.add(point)
+
+    points.current.push(point)
+
+    if (points.current.length < 2) {
+      return
+    }
+    connectPoints(points.current[points.current.length - 2], point)
+  }
+
+  const connectPoints = (point1: fabric.Object, point2: fabric.Object) => {
+    const x1 = point1.left
+    const y1 = point1.top
+    const x2 = point2.left
+    const y2 = point2.top
+
+    // 점을 연결하는 선 생성
+    const connectingLine = new fabric.Line([x1!, y1!, x2!, y2!], {
+      stroke: 'red',
+      selectable: false,
+    })
+
+    canvas?.add(connectingLine)
+  }
+
+  // const modifyFigure = () => {
+  //   const figure = canvas?._activeObject as fabric.Polygon
+  //   if (figure.points) {
+  //     const foundObjects = canvas?.getObjects().filter((obj) => {
+  //       return obj.name === `${figure.name}-circle`
+  //     })
+
+  //     // 찾은 객체 삭제
+  //     if (foundObjects!.length > 0) {
+  //       foundObjects?.forEach((obj) => {
+  //         canvas?.remove(obj)
+  //       })
+  //     }
+
+  //     const points = figure.points
+
+  //     points.forEach((point, index) => {
+  //       const circle = new fabric.Circle({
+  //         radius: 5,
+  //         fill: 'red',
+  //         originX: 'center',
+  //         originY: 'center',
+  //         left: point.x + figure.left!,
+  //         top: point.y + figure.top!,
+  //         name: `${figure.name}-circle`,
+  //       })
+
+  //       circle.on('moving', (e) => {
+  //         const newPoints = [...figure.points!]
+
+  //         newPoints[index] = { x: e.pointer!.x, y: e.pointer!.y }
+
+  //         figure.set({ points: newPoints })
+  //         figure.setCoords()
+  //         canvas?.renderAll()
+  //       })
+
+  //       canvas?.add(circle)
+  //     })
+  //   }
+  // }
+
   return {
     canvas,
     createFigure,
@@ -346,5 +451,6 @@ export function useCanvas(id: string) {
     handleDelete,
     handleSave,
     handlePaste,
+    handleRotate,
   } as const
 }
