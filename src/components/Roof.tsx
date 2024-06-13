@@ -132,7 +132,95 @@ export default function Roof() {
     let x = fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x,
       y = fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y
     return fabric.util.transformPoint(
-      { x, y },
+      {
+        x,
+        y,
+        type: '',
+        add: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        addEquals: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        scalarAdd: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        scalarAddEquals: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        subtract: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        subtractEquals: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        scalarSubtract: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        scalarSubtractEquals: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        multiply: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        multiplyEquals: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        divide: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        divideEquals: function (scalar: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        eq: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        lt: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        lte: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        gt: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        gte: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        lerp: function (that: fabric.IPoint, t: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        distanceFrom: function (that: fabric.IPoint): number {
+          throw new Error('Function not implemented.')
+        },
+        midPointFrom: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        min: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        max: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        setXY: function (x: number, y: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        setX: function (x: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        setY: function (y: number): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        setFromPoint: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        swap: function (that: fabric.IPoint): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+        clone: function (): fabric.Point {
+          throw new Error('Function not implemented.')
+        },
+      },
       fabric.util.multiplyTransformMatrices(
         fabricObject.canvas.viewportTransform,
         fabricObject.calcTransformMatrix(),
@@ -183,6 +271,91 @@ export default function Roof() {
         {
           x: originX,
           y: originY,
+          type: '',
+          add: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          addEquals: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          scalarAdd: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          scalarAddEquals: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          subtract: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          subtractEquals: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          scalarSubtract: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          scalarSubtractEquals: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          multiply: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          multiplyEquals: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          divide: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          divideEquals: function (scalar: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          eq: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          lt: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          lte: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          gt: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          gte: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          lerp: function (that: fabric.IPoint, t: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          distanceFrom: function (that: fabric.IPoint): number {
+            throw new Error('Function not implemented.')
+          },
+          midPointFrom: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          min: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          max: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          setXY: function (x: number, y: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          setX: function (x: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          setY: function (y: number): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          setFromPoint: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          swap: function (that: fabric.IPoint): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
+          clone: function (): fabric.Point {
+            throw new Error('Function not implemented.')
+          },
         },
         fabricObject.calcTransformMatrix(),
       )
