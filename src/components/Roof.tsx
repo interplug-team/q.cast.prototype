@@ -380,6 +380,12 @@ export default function Roof() {
   return (
     <>
       <div className="flex justify-center my-8">
+        <div className="flex justify-center my-8">
+          <p>
+            ctrl을 누른 채로 클릭하면 점이 생성되고 점을 하나 더 만들면 선이
+            생성됩니다.
+          </p>
+        </div>
         <button
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
           onClick={addRect}
@@ -452,20 +458,11 @@ export default function Roof() {
         >
           붙여넣기
         </button>
-
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
           onClick={() => handleRotate()}
         >
           45도 회전
-        </button>
-        <button
-          className="w-30 mx-2 p-2 rounded bg-black text-white"
-          onClick={() => {
-            edit()
-          }}
-        >
-          수정
         </button>
       </div>
       <div

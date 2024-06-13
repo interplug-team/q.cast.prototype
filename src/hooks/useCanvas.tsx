@@ -1,5 +1,6 @@
+import { useEffect, useRef, useState } from 'react'
+
 import { fabric } from 'fabric'
-import { useEffect, useState } from 'react'
 
 const CANVAS = {
   WIDTH: 1000,
@@ -10,6 +11,9 @@ export function useCanvas(id: string) {
   const [canvas, setCanvas] = useState<fabric.Canvas | undefined>()
   const [isLocked, setIsLocked] = useState<boolean>(false)
   const [history, setHistory] = useState<fabric.Object[] | undefined>([])
+
+  const connectMode = useRef<boolean>(false)
+  const points = useRef<fabric.Object[]>([])
 
   /**
    * 처음 셋팅
@@ -45,6 +49,7 @@ export function useCanvas(id: string) {
       })
       canvas.on('object:modified', onChange)
       canvas.on('object:removed', onChange)
+      canvas.on('mouse:down', onClick)
     }
   }, [canvas])
 
@@ -166,17 +171,17 @@ export function useCanvas(id: string) {
    * 선택한 도형을 복사한다.
    */
   const handleCopy = (): void => {
-    const targetObj = canvas?.getActiveObject()
-    if (!targetObj) {
-      alert('복사할 대상을 선택해주세요.')
+    const activeObjects = canvas?.getActiveObjects()
+
+    if (activeObjects?.length === 0) {
       return
     }
 
-    targetObj.clone((cloned: fabric.Object) => {
-      cloned.left! += 10
-      cloned.top! += 10
-      canvas?.add(cloned)
-      canvas?.setActiveObject(cloned)
+    activeObjects?.forEach((obj: fabric.Object) => {
+      obj.clone((cloned: fabric.Object) => {
+        cloned.set({ left: obj.left! + 10, top: obj.top! + 10 })
+        createFigure(cloned)
+      })
     })
   }
 
@@ -398,48 +403,6 @@ export function useCanvas(id: string) {
 
     canvas?.add(connectingLine)
   }
-
-  // const modifyFigure = () => {
-  //   const figure = canvas?._activeObject as fabric.Polygon
-  //   if (figure.points) {
-  //     const foundObjects = canvas?.getObjects().filter((obj) => {
-  //       return obj.name === `${figure.name}-circle`
-  //     })
-
-  //     // 찾은 객체 삭제
-  //     if (foundObjects!.length > 0) {
-  //       foundObjects?.forEach((obj) => {
-  //         canvas?.remove(obj)
-  //       })
-  //     }
-
-  //     const points = figure.points
-
-  //     points.forEach((point, index) => {
-  //       const circle = new fabric.Circle({
-  //         radius: 5,
-  //         fill: 'red',
-  //         originX: 'center',
-  //         originY: 'center',
-  //         left: point.x + figure.left!,
-  //         top: point.y + figure.top!,
-  //         name: `${figure.name}-circle`,
-  //       })
-
-  //       circle.on('moving', (e) => {
-  //         const newPoints = [...figure.points!]
-
-  //         newPoints[index] = { x: e.pointer!.x, y: e.pointer!.y }
-
-  //         figure.set({ points: newPoints })
-  //         figure.setCoords()
-  //         canvas?.renderAll()
-  //       })
-
-  //       canvas?.add(circle)
-  //     })
-  //   }
-  // }
 
   return {
     canvas,
