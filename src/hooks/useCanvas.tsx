@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { fabric } from 'fabric'
-import { Point, Polygon } from 'fabric/fabric-impl'
+import { Point } from 'fabric/fabric-impl'
+import { IPartial, IPolygon } from '@/types/IFabric'
 
 const CANVAS = {
   WIDTH: 1000,
@@ -109,7 +110,7 @@ export function useCanvas(id: string) {
     if (target) {
       switch (action) {
         case 'modifyPolygon':
-          settleDownPolygon(target)
+          settleDownPolygon(target as IPolygon)
           break
       }
       settleDown(target)
@@ -134,7 +135,7 @@ export function useCanvas(id: string) {
   /**
    * polygon용
    */
-  const settleDownPolygon = (polygon: fabric.Polygon) => {
+  const settleDownPolygon = (polygon: IPolygon) => {
     const points = polygon.points
 
     const settledPoints = points?.map((point) => {
@@ -142,7 +143,7 @@ export function useCanvas(id: string) {
         x: Math.round(point.x / 10) * 10,
         y: Math.round(point.y / 10) * 10,
       }
-    })
+    }) as Point[]
 
     polygon.set({ points: settledPoints })
   }
@@ -376,19 +377,15 @@ export function useCanvas(id: string) {
     canvas?.renderAll()
   }
 
-  interface IFPoly extends Polygon {
-    edit: Boolean
-  }
-
   /**
    * Polygon 타입만 가능
    * 생성한 polygon을 넘기면 해당 polygon은 꼭지점으로 컨트롤 가능한 polygon이 됨
    */
-  const attachCustomContolOnPolygon = (poly: IFPoly) => {
-    var lastControl = poly.points?.length! - 1
+  const attachCustomContolOnPolygon = (poly: IPolygon) => {
+    const lastControl = poly.points?.length! - 1
     poly.cornerStyle = 'rect'
     poly.cornerColor = 'rgba(0,0,255,0.5)'
-    poly.controls = poly.points!.reduce(function (acc : any, point, index) {
+    poly.controls = poly.points!.reduce(function (acc: any, point, index) {
       acc['p' + index] = new fabric.Control({
         positionHandler: polygonPositionHandler,
         actionHandler: anchorWrapper(
@@ -397,7 +394,7 @@ export function useCanvas(id: string) {
         ),
         actionName: 'modifyPolygon',
         pointIndex: index,
-      })
+      } as IPartial)
       return acc
     }, {})
 
@@ -411,7 +408,9 @@ export function useCanvas(id: string) {
     finalMatrix: any,
     fabricObject: any,
   ) {
+    // @ts-ignore
     let x = fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x
+    // @ts-ignore
     let y = fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y
     return fabric.util.transformPoint(
       { x, y } as Point,

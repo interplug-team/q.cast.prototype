@@ -1,6 +1,7 @@
 import { useCanvas } from '@/hooks/useCanvas'
 import { fabric } from 'fabric'
 import { v4 as uuidv4 } from 'uuid'
+import { IPolygon } from '@/types/IFabric'
 
 export default function Roof() {
   const {
@@ -79,7 +80,7 @@ export default function Roof() {
       { x: 100, y: 100 },
     ]
 
-    let polygon = new fabric.Polygon(points, {
+    let polygon : IPolygon = new fabric.Polygon(points, {
       fill: 'transparent',
       strokeWidth: 2,
       stroke: 'black',
@@ -88,7 +89,7 @@ export default function Roof() {
       objectCaching: false,
       transparentCorners: false,
       cornerColor: 'blue',
-    })
+    }) as IPolygon
 
     attachCustomContolOnPolygon(polygon)
 
