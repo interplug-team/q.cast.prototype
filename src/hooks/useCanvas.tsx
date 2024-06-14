@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 import { fabric } from 'fabric'
+import { Point, Polygon } from 'fabric/fabric-impl'
 
 const CANVAS = {
   WIDTH: 1000,
@@ -49,7 +50,7 @@ export function useCanvas(id: string) {
       })
       canvas.on('object:modified', onChange)
       canvas.on('object:removed', onChange)
-      canvas.on('mouse:down', onClick)
+      // canvas.on('mouse:down', onClick)
     }
   }, [canvas])
 
@@ -104,14 +105,14 @@ export function useCanvas(id: string) {
 
   const onChange = (e: fabric.IEvent): void => {
     const target = e.target
+    const action = e.action
     if (target) {
-      settleDown(target)
-      if (target.points) {
-        target.newPoints = target.points.map((points) => ({
-          x: points.x + target.left,
-          y: points.y + target.top,
-        }))
+      switch (action) {
+        case 'modifyPolygon':
+          settleDownPolygon(target)
+          break
       }
+      settleDown(target)
     }
 
     if (!isLocked) {
@@ -128,6 +129,22 @@ export function useCanvas(id: string) {
     const top = Math.round(figure?.top! / 10) * 10
 
     figure?.set({ left: left, top: top })
+  }
+
+  /**
+   * polygon용
+   */
+  const settleDownPolygon = (polygon: fabric.Polygon) => {
+    const points = polygon.points
+
+    const settledPoints = points?.map((point) => {
+      return {
+        x: Math.round(point.x / 10) * 10,
+        y: Math.round(point.y / 10) * 10,
+      }
+    })
+
+    polygon.set({ points: settledPoints })
   }
 
   /**
@@ -359,49 +376,109 @@ export function useCanvas(id: string) {
     canvas?.renderAll()
   }
 
-  const onClick = (event: any) => {
-    const e = event.e
-    if (!e.ctrlKey) {
-      return
-    }
-    // 클릭한 위치의 좌표를 가져옴
-    const pointer = canvas?.getPointer(e)
-    const x = pointer?.x
-    const y = pointer?.y
-
-    // 클릭한 위치에 점(원) 추가
-    const point = new fabric.Circle({
-      left: x,
-      top: y,
-      radius: 5,
-      fill: 'blue',
-      originX: 'center',
-      originY: 'center',
-    })
-
-    canvas?.add(point)
-
-    points.current.push(point)
-
-    if (points.current.length < 2) {
-      return
-    }
-    connectPoints(points.current[points.current.length - 2], point)
+  interface IFPoly extends Polygon {
+    edit: Boolean
   }
 
-  const connectPoints = (point1: fabric.Object, point2: fabric.Object) => {
-    const x1 = point1.left
-    const y1 = point1.top
-    const x2 = point2.left
-    const y2 = point2.top
+  /**
+   * Polygon 타입만 가능
+   * 생성한 polygon을 넘기면 해당 polygon은 꼭지점으로 컨트롤 가능한 polygon이 됨
+   */
+  const attachCustomContolOnPolygon = (poly: IFPoly) => {
+    var lastControl = poly.points?.length! - 1
+    poly.cornerStyle = 'rect'
+    poly.cornerColor = 'rgba(0,0,255,0.5)'
+    poly.controls = poly.points!.reduce(function (acc : any, point, index) {
+      acc['p' + index] = new fabric.Control({
+        positionHandler: polygonPositionHandler,
+        actionHandler: anchorWrapper(
+          index > 0 ? index - 1 : lastControl,
+          actionHandler,
+        ),
+        actionName: 'modifyPolygon',
+        pointIndex: index,
+      })
+      return acc
+    }, {})
 
-    // 점을 연결하는 선 생성
-    const connectingLine = new fabric.Line([x1!, y1!, x2!, y2!], {
-      stroke: 'red',
-      selectable: false,
-    })
+    poly.hasBorders = !poly.edit
+    canvas?.requestRenderAll()
+  }
 
-    canvas?.add(connectingLine)
+  // define a function that can locate the controls
+  function polygonPositionHandler(
+    dim: any,
+    finalMatrix: any,
+    fabricObject: any,
+  ) {
+    let x = fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x
+    let y = fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y
+    return fabric.util.transformPoint(
+      { x, y } as Point,
+      fabric.util.multiplyTransformMatrices(
+        fabricObject.canvas.viewportTransform,
+        fabricObject.calcTransformMatrix(),
+      ),
+    )
+  }
+
+  function getObjectSizeWithStroke(object: any) {
+    let stroke = new fabric.Point(
+      object.strokeUniform ? 1 / object.scaleX : 1,
+      object.strokeUniform ? 1 / object.scaleY : 1,
+    ).multiply(object.strokeWidth)
+    return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
+  }
+
+  // define a function that will define what the control does
+  function actionHandler(eventData: any, transform: any, x: number, y: number) {
+    let polygon = transform.target,
+      currentControl = polygon.controls[polygon.__corner],
+      mouseLocalPosition = polygon.toLocalPoint(
+        new fabric.Point(x, y),
+        'center',
+        'center',
+      ),
+      polygonBaseSize = getObjectSizeWithStroke(polygon),
+      size = polygon._getTransformedDimensions(0, 0)
+    polygon.points[currentControl.pointIndex] = {
+      x:
+        (mouseLocalPosition.x * polygonBaseSize.x) / size.x +
+        polygon.pathOffset.x,
+      y:
+        (mouseLocalPosition.y * polygonBaseSize.y) / size.y +
+        polygon.pathOffset.y,
+    }
+    return true
+  }
+
+  // define a function that can keep the polygon in the same position when we change its width/height/top/left
+  function anchorWrapper(anchorIndex: number, fn: any) {
+    return function (eventData: any, transform: any, x: number, y: number) {
+      let fabricObject = transform.target
+      let originX =
+        fabricObject?.points[anchorIndex].x - fabricObject.pathOffset.x
+      let originY =
+        fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y
+      let absolutePoint = fabric.util.transformPoint(
+        {
+          x: originX,
+          y: originY,
+        } as Point,
+        fabricObject.calcTransformMatrix(),
+      )
+      let actionPerformed = fn(eventData, transform, x, y)
+      let newDim = fabricObject._setPositionDimensions({})
+      let polygonBaseSize = getObjectSizeWithStroke(fabricObject)
+      let newX =
+        (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) /
+        polygonBaseSize.x
+      let newY =
+        (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) /
+        polygonBaseSize.y
+      fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5)
+      return actionPerformed
+    }
   }
 
   return {
@@ -415,5 +492,6 @@ export function useCanvas(id: string) {
     handleSave,
     handlePaste,
     handleRotate,
+    attachCustomContolOnPolygon,
   } as const
 }

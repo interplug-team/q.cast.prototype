@@ -14,6 +14,7 @@ export default function Roof() {
     handleSave,
     handlePaste,
     handleRotate,
+    attachCustomContolOnPolygon,
   } = useCanvas('canvas')
 
   const addRect = () => {
@@ -79,298 +80,19 @@ export default function Roof() {
     ]
 
     let polygon = new fabric.Polygon(points, {
-      left: 100,
-      top: 50,
       fill: 'transparent',
-      strokeWidth: 1,
-      stroke: 'green',
-      scaleX: 4,
-      scaleY: 4,
+      strokeWidth: 2,
+      stroke: 'black',
+      scaleX: 1,
+      scaleY: 1,
       objectCaching: false,
       transparentCorners: false,
       cornerColor: 'blue',
-      edit: false,
     })
 
-    canvas?.add(polygon)
-  }
+    attachCustomContolOnPolygon(polygon)
 
-  function edit() {
-    const poly = canvas?.getActiveObject()
-    poly.edit = !poly.edit
-    if (poly.edit) {
-      var lastControl = poly.points.length - 1
-      poly.cornerStyle = 'rect'
-      poly.cornerColor = 'rgba(0,0,255,0.5)'
-      poly.controls = poly.points.reduce(function (acc, point, index) {
-        acc['p' + index] = new fabric.Control({
-          positionHandler: polygonPositionHandler,
-          actionHandler: anchorWrapper(
-            index > 0 ? index - 1 : lastControl,
-            actionHandler,
-          ),
-          actionName: 'modifyPolygon',
-          pointIndex: index,
-        })
-        return acc
-      }, {})
-    } else {
-      poly.cornerColor = 'blue'
-      poly.cornerStyle = 'rect'
-      poly.controls = fabric.Object.prototype.controls
-    }
-    poly.hasBorders = !poly.edit
-    canvas?.requestRenderAll()
-  }
-
-  // define a function that can locate the controls
-  function polygonPositionHandler(
-    dim: any,
-    finalMatrix: any,
-    fabricObject: any,
-  ) {
-    let x = fabricObject.points[this.pointIndex].x - fabricObject.pathOffset.x,
-      y = fabricObject.points[this.pointIndex].y - fabricObject.pathOffset.y
-    return fabric.util.transformPoint(
-      {
-        x,
-        y,
-        type: '',
-        add: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        addEquals: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        scalarAdd: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        scalarAddEquals: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        subtract: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        subtractEquals: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        scalarSubtract: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        scalarSubtractEquals: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        multiply: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        multiplyEquals: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        divide: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        divideEquals: function (scalar: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        eq: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        lt: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        lte: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        gt: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        gte: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        lerp: function (that: fabric.IPoint, t: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        distanceFrom: function (that: fabric.IPoint): number {
-          throw new Error('Function not implemented.')
-        },
-        midPointFrom: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        min: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        max: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        setXY: function (x: number, y: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        setX: function (x: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        setY: function (y: number): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        setFromPoint: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        swap: function (that: fabric.IPoint): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-        clone: function (): fabric.Point {
-          throw new Error('Function not implemented.')
-        },
-      },
-      fabric.util.multiplyTransformMatrices(
-        fabricObject.canvas.viewportTransform,
-        fabricObject.calcTransformMatrix(),
-      ),
-    )
-  }
-
-  function getObjectSizeWithStroke(object: any) {
-    let stroke = new fabric.Point(
-      object.strokeUniform ? 1 / object.scaleX : 1,
-      object.strokeUniform ? 1 / object.scaleY : 1,
-    ).multiply(object.strokeWidth)
-    return new fabric.Point(object.width + stroke.x, object.height + stroke.y)
-  }
-
-  // define a function that will define what the control does
-  function actionHandler(eventData: any, transform: any, x: number, y: number) {
-    let polygon = transform.target,
-      currentControl = polygon.controls[polygon.__corner],
-      mouseLocalPosition = polygon.toLocalPoint(
-        new fabric.Point(x, y),
-        'center',
-        'center',
-      ),
-      polygonBaseSize = getObjectSizeWithStroke(polygon),
-      size = polygon._getTransformedDimensions(0, 0),
-      finalPointPosition = {
-        x:
-          (mouseLocalPosition.x * polygonBaseSize.x) / size.x +
-          polygon.pathOffset.x,
-        y:
-          (mouseLocalPosition.y * polygonBaseSize.y) / size.y +
-          polygon.pathOffset.y,
-      }
-    polygon.points[currentControl.pointIndex] = finalPointPosition
-    return true
-  }
-
-  // define a function that can keep the polygon in the same position when we change its width/height/top/left
-  function anchorWrapper(anchorIndex: number, fn: any) {
-    return function (eventData: any, transform: any, x: number, y: number) {
-      let fabricObject = transform.target
-      let originX =
-        fabricObject?.points[anchorIndex].x - fabricObject.pathOffset.x
-      let originY =
-        fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y
-      let absolutePoint = fabric.util.transformPoint(
-        {
-          x: originX,
-          y: originY,
-          type: '',
-          add: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          addEquals: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          scalarAdd: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          scalarAddEquals: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          subtract: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          subtractEquals: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          scalarSubtract: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          scalarSubtractEquals: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          multiply: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          multiplyEquals: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          divide: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          divideEquals: function (scalar: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          eq: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          lt: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          lte: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          gt: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          gte: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          lerp: function (that: fabric.IPoint, t: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          distanceFrom: function (that: fabric.IPoint): number {
-            throw new Error('Function not implemented.')
-          },
-          midPointFrom: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          min: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          max: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          setXY: function (x: number, y: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          setX: function (x: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          setY: function (y: number): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          setFromPoint: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          swap: function (that: fabric.IPoint): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-          clone: function (): fabric.Point {
-            throw new Error('Function not implemented.')
-          },
-        },
-        fabricObject.calcTransformMatrix(),
-      )
-      let actionPerformed = fn(eventData, transform, x, y)
-      let newDim = fabricObject._setPositionDimensions({})
-      let polygonBaseSize = getObjectSizeWithStroke(fabricObject)
-      let newX =
-        (fabricObject.points[anchorIndex].x - fabricObject.pathOffset.x) /
-        polygonBaseSize.x
-      let newY =
-        (fabricObject.points[anchorIndex].y - fabricObject.pathOffset.y) /
-        polygonBaseSize.y
-      fabricObject.setPositionByOrigin(absolutePoint, newX + 0.5, newY + 0.5)
-      return actionPerformed
-    }
+    createFigure(polygon)
   }
 
   const randomColor = () => {
@@ -414,7 +136,7 @@ export default function Roof() {
           className="w-30 mx-2 p-2 rounded bg-blue-500 text-white"
           onClick={addTrapezoid}
         >
-          사다리꼴
+          수정가능한 사다리꼴
         </button>
         <button
           className="w-30 mx-2 p-2 rounded bg-black text-white"
